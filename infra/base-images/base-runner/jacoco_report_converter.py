@@ -73,7 +73,7 @@ def list_src_files():
   src_in_out = out_path + src_path
   for dirpath, _, filenames in os.walk(src_in_out):
     for filename in filenames:
-      full_path = dirpath + "/" + filename
+      full_path = f"{dirpath}/{filename}"
       # Map /out//src/... to /src/...
       src_path = full_path[len(out_path):]
       filename_to_paths.setdefault(filename, []).append(src_path)
@@ -87,17 +87,14 @@ def relative_to_src_path(src_files, canonical_path):
     return []
   candidate_paths = src_files[basename]
   return [
-      path for path in candidate_paths if path.endswith("/" + canonical_path)
+      path for path in candidate_paths if path.endswith(f"/{canonical_path}")
   ]
 
 
 def make_element_summary(element):
   """Returns a coverage summary for an element in the XML report."""
-  summary = {}
-
   function_counter = element.find("./counter[@type='METHOD']")
-  summary["functions"] = make_counter_summary(function_counter)
-
+  summary = {"functions": make_counter_summary(function_counter)}
   line_counter = element.find("./counter[@type='LINE']")
   summary["lines"] = make_counter_summary(line_counter)
 
@@ -122,14 +119,12 @@ def make_element_summary(element):
 
 def make_counter_summary(counter_element, covered_adjustment=0):
   """Turns a JaCoCo <counter> element into an llvm-cov totals entry."""
-  summary = {}
   covered = covered_adjustment
   missed = 0
   if counter_element is not None:
     covered += int(counter_element.attrib["covered"])
     missed += int(counter_element.attrib["missed"])
-  summary["covered"] = covered
-  summary["notcovered"] = missed
+  summary = {"covered": covered, "notcovered": missed}
   summary["count"] = summary["covered"] + summary["notcovered"]
   if summary["count"] != 0:
     summary["percent"] = (100.0 * summary["covered"]) / summary["count"]

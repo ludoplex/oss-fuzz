@@ -30,14 +30,16 @@ QUEUE_TTL_SECONDS = 60 * 60 * 24  # 24 hours.
 
 def update_build_history(project_name, build_id, build_tag):
   """Update build history of project."""
-  project_key = ndb.Key(BuildsHistory, project_name + '-' + build_tag)
+  project_key = ndb.Key(BuildsHistory, f'{project_name}-{build_tag}')
   project = project_key.get()
 
   if not project:
-    project = BuildsHistory(id=project_name + '-' + build_tag,
-                            build_tag=build_tag,
-                            project=project_name,
-                            build_ids=[])
+    project = BuildsHistory(
+        id=f'{project_name}-{build_tag}',
+        build_tag=build_tag,
+        project=project_name,
+        build_ids=[],
+    )
 
   if len(project.build_ids) >= MAX_BUILD_HISTORY_LENGTH:
     project.build_ids.pop(0)
@@ -49,12 +51,11 @@ def update_build_history(project_name, build_id, build_tag):
 def get_project_data(project_name):
   """Retrieve project metadata from datastore."""
   query = Project.query(Project.name == project_name)
-  project = query.get()
-  if not project:
+  if project := query.get():
+    return project.project_yaml_contents, project.dockerfile_contents
+  else:
     raise RuntimeError(
         f'Project {project_name} not available in cloud datastore')
-
-  return project.project_yaml_contents, project.dockerfile_contents
 
 
 def get_empty_config():
@@ -92,13 +93,14 @@ def request_build(event, context):
 
   with ndb.Client().context():
     credentials, cloud_project = google.auth.default()
-    build_steps = get_build_steps(project_name, cloud_project, BASE_PROJECT)
-    if not build_steps:
+    if build_steps := get_build_steps(project_name, cloud_project,
+                                      BASE_PROJECT):
+      run_build(
+          project_name,
+          build_steps,
+          credentials,
+          build_project.FUZZING_BUILD_TYPE,
+          cloud_project=cloud_project,
+      )
+    else:
       return
-    run_build(
-        project_name,
-        build_steps,
-        credentials,
-        build_project.FUZZING_BUILD_TYPE,
-        cloud_project=cloud_project,
-    )

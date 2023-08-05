@@ -75,7 +75,7 @@ class GitFilestore(filestore.BaseFilestore):
     """Resets the git repo."""
     self._git('fetch', 'origin')
     try:
-      self._git('checkout', '-B', branch, 'origin/' + branch)
+      self._git('checkout', '-B', branch, f'origin/{branch}')
       self._git('reset', '--hard', 'HEAD')
     except subprocess.CalledProcessError:
       self._git('checkout', '--orphan', branch)

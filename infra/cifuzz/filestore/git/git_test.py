@@ -57,9 +57,10 @@ class GitFilestoreTest(unittest.TestCase):
     self.git_repo('init', '--bare')
 
     self.config = test_helpers.create_run_config(
-        git_store_repo='file://' + self.git_dir.name,
+        git_store_repo=f'file://{self.git_dir.name}',
         git_store_branch='main',
-        git_store_branch_coverage='cov-branch')
+        git_store_branch_coverage='cov-branch',
+    )
 
     self.mock_ci_filestore = mock.MagicMock()
     self.git_store = git.GitFilestore(self.config, self.mock_ci_filestore)

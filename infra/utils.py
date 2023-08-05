@@ -142,10 +142,7 @@ def is_fuzz_target_local(file_path):
 
 def binary_print(string):
   """Print that can print a binary string."""
-  if isinstance(string, bytes):
-    string += b'\n'
-  else:
-    string += '\n'
+  string += b'\n' if isinstance(string, bytes) else '\n'
   sys.stdout.buffer.write(string)
   sys.stdout.flush()
 
@@ -171,7 +168,4 @@ def remove_prefix(string, prefix):
   """Returns |string| without the leading substring |prefix|."""
   # Match behavior of removeprefix from python3.9:
   # https://www.python.org/dev/peps/pep-0616/
-  if string.startswith(prefix):
-    return string[len(prefix):]
-
-  return string
+  return string[len(prefix):] if string.startswith(prefix) else string

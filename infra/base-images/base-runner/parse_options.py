@@ -29,15 +29,10 @@ def parse_options(options_file_path, options_section):
 
   options = parser[options_section]
 
-  if options_section == 'libfuzzer':
-    options_string = ' '.join(
-        '-%s=%s' % (key, value) for key, value in options.items())
-  else:
-    # Sanitizer options.
-    options_string = ':'.join(
-        '%s=%s' % (key, value) for key, value in options.items())
-
-  return options_string
+  return (' '.join(f'-{key}={value}'
+                   for key, value in options.items()) if options_section
+          == 'libfuzzer' else ':'.join(f'{key}={value}'
+                                       for key, value in options.items()))
 
 
 def main():

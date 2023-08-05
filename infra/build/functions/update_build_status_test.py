@@ -43,11 +43,8 @@ class MockGetBuild:
   def get_build(self, cloudbuild, image_project, build_id):
     """Mimic build object retrieval."""
     del cloudbuild, image_project
-    for build in self.builds:
-      if build['build_id'] == build_id:
-        return build
-
-    return None
+    return next(
+        (build for build in self.builds if build['build_id'] == build_id), None)
 
 
 @mock.patch('google.auth.default', return_value=['temp', 'temp'])

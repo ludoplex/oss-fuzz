@@ -29,7 +29,7 @@ def main():
   out = sys.argv[2]
 
   for target_name, labels in labels_by_target.items():
-    with open(os.path.join(out, target_name + '.labels'), 'w') as file_handle:
+    with open(os.path.join(out, f'{target_name}.labels'), 'w') as file_handle:
       file_handle.write('\n'.join(labels))
 
 

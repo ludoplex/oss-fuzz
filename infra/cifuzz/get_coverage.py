@@ -111,16 +111,18 @@ class OSSFuzzCoverage(BaseCoverage):
     if not self.fuzzer_stats_url:
       return None
 
-    target_url = utils.url_join(self.fuzzer_stats_url, target + '.json')
+    target_url = utils.url_join(self.fuzzer_stats_url, f'{target}.json')
     return http_utils.get_json_from_url(target_url)
 
 
 def _get_oss_fuzz_latest_cov_report_info(oss_fuzz_project_name):
   """Gets and returns a dictionary containing the latest coverage report info
   for |project|."""
-  latest_report_info_url = utils.url_join(utils.GCS_BASE_URL,
-                                          OSS_FUZZ_LATEST_COVERAGE_INFO_PATH,
-                                          oss_fuzz_project_name + '.json')
+  latest_report_info_url = utils.url_join(
+      utils.GCS_BASE_URL,
+      OSS_FUZZ_LATEST_COVERAGE_INFO_PATH,
+      f'{oss_fuzz_project_name}.json',
+  )
   latest_cov_info = http_utils.get_json_from_url(latest_report_info_url)
   if latest_cov_info is None:
     logging.error('Could not get the coverage report json from url: %s.',
@@ -149,8 +151,7 @@ def _get_oss_fuzz_fuzzer_stats_dir_url(oss_fuzz_project_name):
     return None
 
   fuzzer_stats_dir_gs_url = latest_cov_info['fuzzer_stats_dir']
-  fuzzer_stats_dir_url = utils.gs_url_to_https(fuzzer_stats_dir_gs_url)
-  return fuzzer_stats_dir_url
+  return utils.gs_url_to_https(fuzzer_stats_dir_gs_url)
 
 
 class FilesystemCoverage(BaseCoverage):
@@ -171,7 +172,7 @@ class FilesystemCoverage(BaseCoverage):
     """
     logging.info('Getting coverage for %s from filesystem.', target)
     fuzzer_stats_json_path = os.path.join(self.project_coverage_dir,
-                                          'fuzzer_stats', target + '.json')
+                                          'fuzzer_stats', f'{target}.json')
     if not os.path.exists(fuzzer_stats_json_path):
       logging.warning('%s does not exist.', fuzzer_stats_json_path)
       return None

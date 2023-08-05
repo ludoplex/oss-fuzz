@@ -10,28 +10,28 @@ UPLOAD_FILE_CONCURRENCY = 2
 def get_runtime_url():
   """Returns the value of the ACTIONS_RUNTIME_URL var in the environment. Raises
   an exception if not set."""
-  url = os.environ.get('ACTIONS_RUNTIME_URL')
-  if not url:
+  if url := os.environ.get('ACTIONS_RUNTIME_URL'):
+    return url
+  else:
     raise Exception('Unable to get ACTIONS_RUNTIME_URL env variable')
-  return url
 
 
 def get_runtime_token():
   """Returns the value of the ACTIONS_RUNTIME_TOKEN var in the environment.
   Raises an exception if not set."""
-  token = os.environ.get('ACTIONS_RUNTIME_TOKEN')
-  if not token:
+  if token := os.environ.get('ACTIONS_RUNTIME_TOKEN'):
+    return token
+  else:
     raise Exception('Unable to get ACTIONS_RUNTIME_TOKEN env variable')
-  return token
 
 
 def get_work_flow_run_id():
   """Returns the value of the GITHUB_RUN_ID var in the environment. Raises an
   exception if not set."""
-  work_flow_run_id = os.environ.get('GITHUB_RUN_ID')
-  if not work_flow_run_id:
+  if work_flow_run_id := os.environ.get('GITHUB_RUN_ID'):
+    return work_flow_run_id
+  else:
     raise Exception('Unable to get GITHUB_RUN_ID env variable.')
-  return work_flow_run_id
 
 
 def get_retention_days():

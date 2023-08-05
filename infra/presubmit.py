@@ -66,7 +66,7 @@ def _check_one_lib_fuzzing_engine(build_sh_file):
 def check_lib_fuzzing_engine(paths):
   """Calls _check_one_lib_fuzzing_engine on each path in |paths|. Returns True
   if the result of every call is True."""
-  return all([_check_one_lib_fuzzing_engine(path) for path in paths])
+  return all(_check_one_lib_fuzzing_engine(path) for path in paths)
 
 
 class ProjectYamlChecker:
@@ -182,7 +182,7 @@ class ProjectYamlChecker:
             self.error('Not allowed value in the project.yaml: ' +
                        str(constant))
         else:
-          self.error('Not allowed value in the project.yaml: ' + str(constant))
+          self.error(f'Not allowed value in the project.yaml: {str(constant)}')
 
   def check_valid_section_names(self):
     """Returns True if all section names are valid."""
@@ -195,23 +195,21 @@ class ProjectYamlChecker:
     """Returns True if all required sections are in |self.data|."""
     for section in self.REQUIRED_SECTIONS:
       if section not in self.data:
-        self.error(section + ' section is missing.')
+        self.error(f'{section} section is missing.')
 
   def check_valid_emails(self):
     """Returns True if emails are valid looking.."""
     # Get email addresses.
     email_addresses = []
-    primary_contact = self.data.get('primary_contact')
-    if primary_contact:
+    if primary_contact := self.data.get('primary_contact'):
       email_addresses.append(primary_contact)
-    auto_ccs = self.data.get('auto_ccs')
-    if auto_ccs:
+    if auto_ccs := self.data.get('auto_ccs'):
       email_addresses.extend(auto_ccs)
 
     # Check that email addresses seem normal.
     for email_address in email_addresses:
       if '@' not in email_address or '.' not in email_address:
-        self.error(email_address + ' is an invalid email address.')
+        self.error(f'{email_address} is an invalid email address.')
 
   def check_valid_language(self):
     """Returns True if the language is specified and valid."""
@@ -236,7 +234,7 @@ def _check_one_project_yaml(project_yaml_filename):
 def check_project_yaml(paths):
   """Calls _check_one_project_yaml on each path in |paths|. Returns True if the
   result of every call is True."""
-  return all([_check_one_project_yaml(path) for path in paths])
+  return all(_check_one_project_yaml(path) for path in paths)
 
 
 def do_checks(changed_files):
@@ -248,7 +246,7 @@ def do_checks(changed_files):
   # we don't quit early on failure. This is more user-friendly since the more
   # errors we spit out at once, the less frequently the less check-fix-check
   # cycles they need to do.
-  return all([check(changed_files) for check in checks])
+  return all(check(changed_files) for check in checks)
 
 
 _CHECK_LICENSE_FILENAMES = ['Dockerfile']
@@ -280,7 +278,7 @@ def check_license(paths):
   success = True
   for path in paths:
     path_parts = str(path).split(os.sep)
-    if any(path_part == THIRD_PARTY_DIR_NAME for path_part in path_parts):
+    if THIRD_PARTY_DIR_NAME in path_parts:
       continue
     filename = os.path.basename(path)
     extension = os.path.splitext(path)[1]
@@ -290,7 +288,7 @@ def check_license(paths):
 
     with open(path) as file_handle:
       if _LICENSE_STRING not in file_handle.read():
-        print('Missing license header in file %s.' % str(path))
+        print(f'Missing license header in file {str(path)}.')
         success = False
 
   return success
@@ -328,9 +326,7 @@ def yapf(paths, validate=True):
     return True
 
   validate_argument = '-d' if validate else '-i'
-  command = ['yapf', validate_argument, '-p']
-  command.extend(paths)
-
+  command = ['yapf', validate_argument, '-p', *paths]
   returncode = subprocess.run(command, check=False).returncode
   return returncode == 0
 
@@ -341,10 +337,8 @@ def get_changed_files():
       ['git', 'merge-base', 'HEAD', 'origin/HEAD']).strip().decode()
 
   diff_commands = [
-      # Return list of modified files in the commits on this branch.
-      ['git', 'diff', '--name-only', branch_commit_hash + '..'],
-      # Return list of modified files from uncommitted changes.
-      ['git', 'diff', '--name-only']
+      ['git', 'diff', '--name-only', f'{branch_commit_hash}..'],
+      ['git', 'diff', '--name-only'],
   ]
 
   changed_files = set()
@@ -455,11 +449,7 @@ def main():
                       default=False)
   args = parser.parse_args()
 
-  if args.all_files:
-    relevant_files = get_all_files()
-  else:
-    relevant_files = get_changed_files()
-
+  relevant_files = get_all_files() if args.all_files else get_changed_files()
   os.chdir(_SRC_ROOT)
 
   # Do one specific check if the user asked for it.

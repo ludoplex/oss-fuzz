@@ -53,19 +53,21 @@ def create_project_data(project,
 
 def start_datastore_emulator():
   """Start Datastore emulator."""
-  return subprocess.Popen([
-      'gcloud',
-      'beta',
-      'emulators',
-      'datastore',
-      'start',
-      '--consistency=1.0',
-      '--host-port=localhost:' + str(DATASTORE_EMULATOR_PORT),
-      '--project=' + PROJECT,
-      '--no-store-on-disk',
-  ],
-                          stdout=subprocess.PIPE,
-                          stderr=subprocess.STDOUT)
+  return subprocess.Popen(
+      [
+          'gcloud',
+          'beta',
+          'emulators',
+          'datastore',
+          'start',
+          '--consistency=1.0',
+          f'--host-port=localhost:{str(DATASTORE_EMULATOR_PORT)}',
+          f'--project={PROJECT}',
+          '--no-store-on-disk',
+      ],
+      stdout=subprocess.PIPE,
+      stderr=subprocess.STDOUT,
+  )
 
 
 def wait_for_emulator_ready(proc,
@@ -109,8 +111,8 @@ def cleanup_emulator(ds_emulator):
 
 def set_gcp_environment():
   """Set environment variables for simulating in google cloud platform."""
-  os.environ['DATASTORE_EMULATOR_HOST'] = 'localhost:' + str(
-      DATASTORE_EMULATOR_PORT)
+  os.environ[
+      'DATASTORE_EMULATOR_HOST'] = f'localhost:{str(DATASTORE_EMULATOR_PORT)}'
   os.environ['GOOGLE_CLOUD_PROJECT'] = PROJECT
   os.environ['DATASTORE_DATASET'] = PROJECT
   os.environ['GCP_PROJECT'] = PROJECT

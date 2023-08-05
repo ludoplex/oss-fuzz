@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Module for dealing with docker."""
+
 import logging
 import os
 import sys
@@ -27,9 +28,14 @@ PROJECT_TAG_PREFIX = 'gcr.io/oss-fuzz/'
 
 # Default fuzz configuration.
 _DEFAULT_DOCKER_RUN_ARGS = [
-    '--cap-add', 'SYS_PTRACE', '-e',
-    'FUZZING_ENGINE=' + constants.DEFAULT_ENGINE, '-e',
-    'ARCHITECTURE=' + constants.DEFAULT_ARCHITECTURE, '-e', 'CIFUZZ=True'
+    '--cap-add',
+    'SYS_PTRACE',
+    '-e',
+    f'FUZZING_ENGINE={constants.DEFAULT_ENGINE}',
+    '-e',
+    f'ARCHITECTURE={constants.DEFAULT_ARCHITECTURE}',
+    '-e',
+    'CIFUZZ=True',
 ]
 
 EXTERNAL_PROJECT_IMAGE = 'external-project'
@@ -54,10 +60,7 @@ def get_docker_env_vars(env_mapping):
 def get_project_image_name(project):
   """Returns the name of the project builder image for |project_name|."""
   # TODO(ochang): We may need unique names to support parallel fuzzing.
-  if project:
-    return PROJECT_TAG_PREFIX + project
-
-  return EXTERNAL_PROJECT_IMAGE
+  return PROJECT_TAG_PREFIX + project if project else EXTERNAL_PROJECT_IMAGE
 
 
 def delete_images(images):

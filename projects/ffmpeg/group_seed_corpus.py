@@ -34,8 +34,7 @@ def get_fuzzer_tags(fuzzer_name):
   # All subtitle samples are in 'sub' directory, need to add 'sub' tag manually.
   if 'subtitle' in fuzzer_name:
     tags.append('sub')
-  m = CODEC_NAME_REGEXP.search(fuzzer_name)
-  if m:
+  if m := CODEC_NAME_REGEXP.search(fuzzer_name):
     codec_name = m.group(1)
     # Some names are complex, need to split them and filter common strings.
     codec_name_parts = codec_name.split('_')
@@ -44,8 +43,7 @@ def get_fuzzer_tags(fuzzer_name):
       codec = codec.split('video')[0]
       codec = codec.split('audio')[0]
       codec = codec.split('subtitle')[0]
-      codec = codec.split('text')[0]
-      if codec:
+      if codec := codec.split('text')[0]:
         # Some codec names have trailing characters: 'VP6F','FLV1', 'JPEGLS'.
         # Use only first 3 characters for long enough codec names.
         if len(codec) > 3:
@@ -115,7 +113,7 @@ def zip_relevant_corpus(corpus_files, fuzzers):
     if not relevant_corpus_files:
       continue
 
-    zip_archive_name = fuzzer + "_seed_corpus.zip"
+    zip_archive_name = f"{fuzzer}_seed_corpus.zip"
     with zipfile.ZipFile(zip_archive_name, 'w') as archive:
       for filename in relevant_corpus_files:
         archive.write(filename)
@@ -123,7 +121,7 @@ def zip_relevant_corpus(corpus_files, fuzzers):
 
 def main():
   if len(sys.argv) < 3:
-    print('Usage: %s <seed_corpus_directory> <fuzzers_directory>' % __file__)
+    print(f'Usage: {__file__} <seed_corpus_directory> <fuzzers_directory>')
     sys.exit(1)
 
   seed_corpus_directory = sys.argv[1]

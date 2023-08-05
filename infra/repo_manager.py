@@ -120,12 +120,9 @@ class RepoManager:
       The parent commit SHA.
     """
     self.fetch_unshallow()
-    out, _, err_code = self.git(['rev-parse', commit + '~' + str(count)],
+    out, _, err_code = self.git(['rev-parse', f'{commit}~{str(count)}'],
                                 check_result=False)
-    if err_code:
-      return None
-
-    return out.strip()
+    return None if err_code else out.strip()
 
   def fetch_all_remotes(self):
     """Fetch all remotes for checkouts that track a single branch."""
@@ -151,14 +148,14 @@ class RepoManager:
     """
     self.fetch_unshallow()
     if oldest_commit and not self.commit_exists(oldest_commit):
-      raise ValueError('The oldest commit %s does not exist' % oldest_commit)
+      raise ValueError(f'The oldest commit {oldest_commit} does not exist')
     if not self.commit_exists(newest_commit):
-      raise ValueError('The newest commit %s does not exist' % newest_commit)
+      raise ValueError(f'The newest commit {newest_commit} does not exist')
     if oldest_commit == newest_commit:
       return [oldest_commit]
 
     if oldest_commit:
-      commit_range = oldest_commit + '..' + newest_commit
+      commit_range = f'{oldest_commit}..{newest_commit}'
     else:
       commit_range = newest_commit
 
@@ -170,8 +167,9 @@ class RepoManager:
     commits = out.split('\n')
     commits = [commit for commit in commits if commit]
     if err_code or not commits:
-      raise RuntimeError('Error getting commit list between %s and %s ' %
-                         (oldest_commit, newest_commit))
+      raise RuntimeError(
+          f'Error getting commit list between {oldest_commit} and {newest_commit} '
+      )
 
     # Make sure result is inclusive
     if oldest_commit:
@@ -213,12 +211,12 @@ class RepoManager:
     """
     self.fetch_unshallow()
     if not self.commit_exists(commit):
-      raise ValueError('Commit %s does not exist in current branch' % commit)
+      raise ValueError(f'Commit {commit} does not exist in current branch')
     self.git(['checkout', '-f', commit], check_result=True)
     if clean:
       self.git(['clean', '-fxd'], check_result=True)
     if self.get_current_commit() != commit:
-      raise RuntimeError('Error checking out commit %s' % commit)
+      raise RuntimeError(f'Error checking out commit {commit}')
 
   def remove_repo(self):
     """Removes the git repo from disk."""

@@ -121,21 +121,16 @@ def get_broken_fuzz_targets(bad_build_results, fuzz_targets):
   """Returns a list of broken fuzz targets and their process results in
   |fuzz_targets| where each item in |bad_build_results| is the result of
   bad_build_check on the corresponding element in |fuzz_targets|."""
-  broken = []
-  for result, fuzz_target in zip(bad_build_results, fuzz_targets):
-    if result.returncode != 0:
-      broken.append((fuzz_target, result))
-  return broken
+  return [(fuzz_target, result)
+          for result, fuzz_target in zip(bad_build_results, fuzz_targets)
+          if result.returncode != 0]
 
 
 def has_ignored_targets(out_dir):
   """Returns True if |out_dir| has any fuzz targets we are supposed to ignore
   bad build checks of."""
   out_files = set(os.listdir(out_dir))
-  for filename in out_files:
-    if re.match(IGNORED_TARGETS_RE, filename):
-      return True
-  return False
+  return any(re.match(IGNORED_TARGETS_RE, filename) for filename in out_files)
 
 
 @contextlib.contextmanager
@@ -189,9 +184,7 @@ def test_all(out, allowed_broken_targets_percentage):
 
   print('Retrying failed fuzz targets sequentially', broken_targets_count)
   pool = multiprocessing.Pool(1)
-  retry_targets = []
-  for broken_target, result in broken_targets:
-    retry_targets.append(broken_target)
+  retry_targets = [broken_target for broken_target, result in broken_targets]
   bad_build_results = pool.map(do_bad_build_check, retry_targets)
   pool.close()
   pool.join()
@@ -235,9 +228,7 @@ def main():
   """Does bad_build_check on all fuzz targets in parallel. Returns 0 on success.
   Returns 1 on failure."""
   allowed_broken_targets_percentage = get_allowed_broken_targets_percentage()
-  if not test_all_outside_out(allowed_broken_targets_percentage):
-    return 1
-  return 0
+  return 1 if not test_all_outside_out(allowed_broken_targets_percentage) else 0
 
 
 if __name__ == '__main__':
