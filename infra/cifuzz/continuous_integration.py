@@ -107,9 +107,7 @@ def get_replace_repo_and_build_command(host_repo_path, image_repo_path):
   rm_path = os.path.join(image_repo_path, '*')
   image_src_path = os.path.dirname(image_repo_path)
   build_command = get_build_command()
-  command = (f'cd / && rm -rf {rm_path} && cp -r {host_repo_path} '
-             f'{image_src_path} && cd - && {build_command}')
-  return command
+  return f'cd / && rm -rf {rm_path} && cp -r {host_repo_path} {image_src_path} && cd - && {build_command}'
 
 
 def get_ci(config):

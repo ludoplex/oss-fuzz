@@ -78,12 +78,7 @@ def sort_projects(projects):
     if not project['history']:
       return 2  # Order projects without history last.
 
-    if project['history'][0]['success']:
-      # Successful builds come second.
-      return 1
-
-    # Build failures come first.
-    return 0
+    return 1 if project['history'][0]['success'] else 0
 
   projects.sort(key=key_func)
 
@@ -260,7 +255,7 @@ def update_status(event, context):
     tag = build_and_run_coverage.COVERAGE_BUILD_TYPE
     status_filename = COVERAGE_STATUS_FILENAME
   else:
-    raise RuntimeError('Invalid build status type ' + status_type)
+    raise RuntimeError(f'Invalid build status type {status_type}')
 
   with ndb.Client().context():
     update_build_status(tag, status_filename)
@@ -270,13 +265,10 @@ def load_status_from_gcs(filename):
   """Load statuses from bucket."""
   status_bucket = get_storage_client().get_bucket(STATUS_BUCKET)
   status = json.loads(status_bucket.blob(filename).download_as_string())
-  result = {}
-
-  for project in status['projects']:
-    if project['history']:
-      result[project['name']] = project['history'][0]['success']
-
-  return result
+  return {
+      project['name']: project['history'][0]['success']
+      for project in status['projects'] if project['history']
+  }
 
 
 def update_badges():

@@ -30,8 +30,8 @@ def main():
   parser.add_argument('--buildroot')
   parser.add_argument('--out')
   args = parser.parse_args()
-  print('  buildroot: ' + args.buildroot)
-  print('        out: ' + args.out)
+  print(f'  buildroot: {args.buildroot}')
+  print(f'        out: {args.out}')
 
   testinfo = os.path.join(args.buildroot, 'host_clang_fuzz',
                           'obj',
@@ -50,8 +50,8 @@ def main():
       # Skip examples
       continue
     src = os.path.join(args.buildroot, objdir, fuzzer)
-    dst = os.path.join(args.out, '{}_{}'.format(module, fuzzer))
-    print('Copying {} to {}'.format(src, dst))
+    dst = os.path.join(args.out, f'{module}_{fuzzer}')
+    print(f'Copying {src} to {dst}')
     shutil.copy(src, dst)
   return 0
 

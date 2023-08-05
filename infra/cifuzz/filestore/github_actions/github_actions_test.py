@@ -75,7 +75,7 @@ class GithubActionsFilestoreTest(fake_filesystem_unittest.TestCase):
     build_dir = 'build-dir'
     self.assertFalse(filestore.download_build(name, build_dir))
     mock_warning.assert_called_with('Could not download artifact: %s.',
-                                    'cifuzz-build-' + name)
+                                    f'cifuzz-build-{name}')
 
   @mock.patch('logging.warning')
   @mock.patch('filestore.github_actions.GithubActionsFilestore._list_artifacts',
@@ -90,7 +90,7 @@ class GithubActionsFilestoreTest(fake_filesystem_unittest.TestCase):
     dst_dir = 'local-dir'
     self.assertFalse(filestore.download_corpus(name, dst_dir))
     mock_warning.assert_called_with('Could not download artifact: %s.',
-                                    'cifuzz-corpus-' + name)
+                                    f'cifuzz-corpus-{name}')
 
   @mock.patch('filestore.github_actions.tar_directory')
   @mock.patch('third_party.github_actions_toolkit.artifact.artifact_client'
@@ -164,7 +164,7 @@ class GithubActionsFilestoreTest(fake_filesystem_unittest.TestCase):
 
     # Don't assert what second and third arguments will be since they are
     # temporary directories.
-    expected_artifact_name = 'cifuzz-' + expected_artifact_name
+    expected_artifact_name = f'cifuzz-{expected_artifact_name}'
     self.assertEqual(mock_upload_artifact.call_args_list[0][0][0],
                      expected_artifact_name)
 
@@ -172,7 +172,7 @@ class GithubActionsFilestoreTest(fake_filesystem_unittest.TestCase):
     artifacts_list = mock_upload_artifact.call_args_list[0][0][1]
     self.assertEqual(len(artifacts_list), 1)
     self.assertEqual(os.path.basename(artifacts_list[0]),
-                     expected_artifact_name + '.tar')
+                     f'{expected_artifact_name}.tar')
 
   def _create_local_dir(self):
     """Sets up pyfakefs and creates a corpus directory containing

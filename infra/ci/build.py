@@ -43,7 +43,7 @@ def get_changed_files_output():
       ['git', 'merge-base', 'HEAD', 'origin/HEAD']).strip().decode()
 
   return subprocess.check_output(
-      ['git', 'diff', '--name-only', branch_commit_hash + '..']).decode()
+      ['git', 'diff', '--name-only', f'{branch_commit_hash}..']).decode()
 
 
 def get_modified_buildable_projects():
@@ -78,7 +78,7 @@ def execute_helper_command(helper_command):
   root = get_oss_fuzz_root()
   script_path = os.path.join(root, 'infra', 'helper.py')
   command = ['python', script_path] + helper_command
-  print('Running command: %s' % ' '.join(command))
+  print(f"Running command: {' '.join(command)}")
   subprocess.check_call(command)
 
 
@@ -260,10 +260,7 @@ def main():
   # It's unnecessary to build the canary if we've built any projects already.
   no_projects_built = result == BuildModifiedProjectsResult.NONE_BUILT
   should_build_canary = no_projects_built and infra_changed
-  if should_build_canary and not build_canary_project():
-    return 1
-
-  return 0
+  return 1 if should_build_canary and not build_canary_project() else 0
 
 
 if __name__ == '__main__':

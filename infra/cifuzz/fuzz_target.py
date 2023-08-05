@@ -192,7 +192,7 @@ class FuzzTarget:  # pylint: disable=too-many-instance-attributes
       # https://github.com/google/oss-fuzz/issues/5383.
       shutil.rmtree(corpus_path, ignore_errors=True)
 
-    target_seed_corpus_path = self.target_path + '_seed_corpus.zip'
+    target_seed_corpus_path = f'{self.target_path}_seed_corpus.zip'
     if os.path.exists(target_seed_corpus_path):
       os.remove(target_seed_corpus_path)
 
@@ -276,7 +276,7 @@ class FuzzTarget:  # pylint: disable=too-many-instance-attributes
     """Returns whether or not the crash is new. A crash is considered new if it
     can't be reproduced on an older ClusterFuzz build of the target."""
     if not os.path.exists(testcase):
-      raise ReproduceError('Testcase %s not found.' % testcase)
+      raise ReproduceError(f'Testcase {testcase} not found.')
     clusterfuzz_build_dir = self.clusterfuzz_deployment.download_latest_build()
     if not clusterfuzz_build_dir:
       # Crash is reproducible on PR build and we can't test on a recent
@@ -314,7 +314,6 @@ def get_testcase(stderr_bytes):
   Returns:
     The path to the testcase or None if not found.
   """
-  match = re.search(rb'\bTest unit written to (.+)', stderr_bytes)
-  if match:
-    return match.group(1).decode('utf-8')
+  if match := re.search(rb'\bTest unit written to (.+)', stderr_bytes):
+    return match[1].decode('utf-8')
   return None

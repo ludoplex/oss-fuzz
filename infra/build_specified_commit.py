@@ -110,7 +110,7 @@ def _replace_base_builder_digest(dockerfile_path, digest):
   new_lines = []
   for line in lines:
     if line.strip().startswith('FROM'):
-      line = 'FROM gcr.io/oss-fuzz-base/base-builder@' + digest + '\n'
+      line = f'FROM gcr.io/oss-fuzz-base/base-builder@{digest}' + '\n'
 
     new_lines.append(line)
 
@@ -121,14 +121,14 @@ def _replace_base_builder_digest(dockerfile_path, digest):
 def copy_src_from_docker(project_name, host_dir):
   """Copy /src from docker to the host."""
   # Copy /src to host.
-  image_name = 'gcr.io/oss-fuzz/' + project_name
+  image_name = f'gcr.io/oss-fuzz/{project_name}'
   src_dir = os.path.join(host_dir, 'src')
   if os.path.exists(src_dir):
     shutil.rmtree(src_dir, ignore_errors=True)
 
   docker_args = [
       '-v',
-      host_dir + ':/out',
+      f'{host_dir}:/out',
       image_name,
       'cp',
       '-r',
@@ -168,10 +168,9 @@ def get_required_post_checkout_steps(dockerfile_path):
       subsequent_run_cmds = []
       continue
 
-    match = post_run_pattern.match(line)
-    if match:
+    if match := post_run_pattern.match(line):
       workdir = helper.workdir_from_lines(lines[:i])
-      command = match.group(1)
+      command = match[1]
       subsequent_run_cmds.append((workdir, command))
 
   return subsequent_run_cmds
@@ -216,8 +215,8 @@ def build_fuzzers_from_commit(commit,
           '-w',
           workdir,
           '-v',
-          host_src_path + ':' + '/src',
-          'gcr.io/oss-fuzz/' + build_data.project_name,
+          f'{host_src_path}:/src',
+          f'gcr.io/oss-fuzz/{build_data.project_name}',
           '/bin/bash',
           '-c',
           post_checkout_step,
@@ -241,11 +240,16 @@ def build_fuzzers_from_commit(commit,
 
     # Find first change in the projects/<PROJECT> directory before the project
     # commit date.
-    oss_fuzz_commit, _, _ = oss_fuzz_repo_manager.git([
-        'log', '--before=' + commit_date.isoformat(), '-n1', '--format=%H',
-        projects_dir
-    ],
-                                                      check_result=True)
+    oss_fuzz_commit, _, _ = oss_fuzz_repo_manager.git(
+        [
+            'log',
+            f'--before={commit_date.isoformat()}',
+            '-n1',
+            '--format=%H',
+            projects_dir,
+        ],
+        check_result=True,
+    )
     oss_fuzz_commit = oss_fuzz_commit.strip()
     if not oss_fuzz_commit:
       logging.info(
@@ -316,7 +320,7 @@ def detect_main_repo(project_name, repo_name=None, commit=None):
   if not _build_image_with_retries(project_name):
     logging.error('Error: building %s image failed.', project_name)
     return None, None
-  docker_image_name = 'gcr.io/oss-fuzz/' + project_name
+  docker_image_name = f'gcr.io/oss-fuzz/{project_name}'
   command_to_run = [
       'docker', 'run', '--rm', '-t', docker_image_name, 'python3',
       os.path.join('/opt', 'cifuzz', 'detect_repo.py')
@@ -327,8 +331,8 @@ def detect_main_repo(project_name, repo_name=None, commit=None):
     command_to_run.extend(['--example_commit', commit])
   out, _, _ = utils.execute(command_to_run)
   match = re.search(r'\bDetected repo: ([^ ]+) ([^ ]+)', out.rstrip())
-  if match and match.group(1) and match.group(2):
-    return match.group(1), match.group(2)
+  if match and match[1] and match[2]:
+    return match[1], match[2]
 
   logging.error('Failed to detect repo:\n%s', out)
   return None, None

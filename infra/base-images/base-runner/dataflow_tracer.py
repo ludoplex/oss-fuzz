@@ -70,7 +70,7 @@ def _run(cmd, timeout=None):
   except subprocess.TimeoutExpired:
     raise
   except Exception as e:
-    _error('Exception: ' + str(e))
+    _error(f'Exception: {str(e)}')
 
   return result
 
@@ -111,7 +111,7 @@ def collect_traces(binary, corpus_dir, dft_dir):
         stats['traced'] += 1
 
     except subprocess.TimeoutExpired as e:
-      _error('Slow input: ' + str(e))
+      _error(f'Slow input: {str(e)}')
       stats['slow'] += 1
 
   return stats
@@ -148,7 +148,7 @@ def main():
     print('{0}: {1}'.format(k, v))
 
   # Checksum that we didn't lose track of any of the inputs.
-  assert stats['total'] * 2 == sum(v for v in stats.values())
+  assert stats['total'] * 2 == sum(stats.values())
   sys.exit(0)
 
 

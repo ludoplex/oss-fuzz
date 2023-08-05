@@ -38,7 +38,7 @@ def main():
     with open(args.json, 'r') as json_file:
       prebuilts = json.load(json_file)
   except Exception:
-    print('Encountered error attempting to load ' + args.json)
+    print(f'Encountered error attempting to load {args.json}')
     raise
 
   # Filter out args.excludes
@@ -47,9 +47,9 @@ def main():
 
   # Rename original CIPD JSON file
   try:
-    os.rename(args.json, args.json + '.orig')
+    os.rename(args.json, f'{args.json}.orig')
   except Exception:
-    print('Encountered error attempting to rename ' + args.json)
+    print(f'Encountered error attempting to rename {args.json}')
     raise
 
   # Save new CIPD JSON file
@@ -57,7 +57,7 @@ def main():
     with open(args.json, 'w') as json_file:
       json.dump(prebuilts, json_file, indent=2)
   except Exception:
-    print('Encountered error attempting to write ' + args.json)
+    print(f'Encountered error attempting to write {args.json}')
     raise
 
   return 0

@@ -126,9 +126,7 @@ class Project:  # pylint: disable=too-many-instance-attributes
       if isinstance(sanitizer, six.string_types):
         processed_sanitizers.append(sanitizer)
       elif isinstance(sanitizer, dict):
-        for key in sanitizer.keys():
-          processed_sanitizers.append(key)
-
+        processed_sanitizers.extend(iter(sanitizer.keys()))
     return processed_sanitizers
 
   @property
@@ -155,9 +153,9 @@ def set_yaml_defaults(project_yaml):
 
 def is_supported_configuration(build):
   """Check if the given configuration is supported."""
-  fuzzing_engine_info = build_lib.ENGINE_INFO[build.fuzzing_engine]
   if build.architecture == 'i386' and build.sanitizer != 'address':
     return False
+  fuzzing_engine_info = build_lib.ENGINE_INFO[build.fuzzing_engine]
   return (build.sanitizer in fuzzing_engine_info.supported_sanitizers and
           build.architecture in fuzzing_engine_info.supported_architectures)
 
@@ -166,11 +164,10 @@ def workdir_from_dockerfile(dockerfile):
   """Parses WORKDIR from the Dockerfile."""
   dockerfile_lines = dockerfile.split('\n')
   for line in dockerfile_lines:
-    match = re.match(WORKDIR_REGEX, line)
-    if match:
+    if match := re.match(WORKDIR_REGEX, line):
       # We need to escape '$' since they're used for subsitutions in Container
       # Builer builds.
-      return match.group(1).replace('$', '$$')
+      return match[1].replace('$', '$$')
 
   return '/src'
 
@@ -322,11 +319,13 @@ def get_build_steps(  # pylint: disable=too-many-locals, too-many-statements, to
           })
 
         if build.sanitizer == 'dataflow' and build.fuzzing_engine == 'dataflow':
-          dataflow_steps = dataflow_post_build_steps(project.name, env,
-                                                     base_images_project,
-                                                     config.testing,
-                                                     config.test_image_suffix)
-          if dataflow_steps:
+          if dataflow_steps := dataflow_post_build_steps(
+              project.name,
+              env,
+              base_images_project,
+              config.testing,
+              config.test_image_suffix,
+          ):
             build_steps.extend(dataflow_steps)
           else:
             sys.stderr.write('Skipping dataflow post build steps.\n')
@@ -378,10 +377,10 @@ def get_upload_steps(project, build, timestamp, base_images_project, testing):
   bucket = build_lib.get_upload_bucket(build.fuzzing_engine, build.architecture,
                                        testing)
   stamped_name = '-'.join([project.name, build.sanitizer, timestamp])
-  zip_file = stamped_name + '.zip'
+  zip_file = f'{stamped_name}.zip'
   upload_url = build_lib.get_signed_url(
       build_lib.GCS_UPLOAD_URL_FORMAT.format(bucket, project.name, zip_file))
-  stamped_srcmap_file = stamped_name + '.srcmap.json'
+  stamped_srcmap_file = f'{stamped_name}.srcmap.json'
   srcmap_url = build_lib.get_signed_url(
       build_lib.GCS_UPLOAD_URL_FORMAT.format(bucket, project.name,
                                              stamped_srcmap_file))
@@ -393,7 +392,7 @@ def get_upload_steps(project, build, timestamp, base_images_project, testing):
       latest_version_url, content_type=LATEST_VERSION_CONTENT_TYPE)
   uploader_image = get_uploader_image(base_images_project)
 
-  upload_steps = [
+  return [
       # Zip binaries.
       {
           'name': project.image,
@@ -423,19 +422,11 @@ def get_upload_steps(project, build, timestamp, base_images_project, testing):
       # Cleanup.
       get_cleanup_step(project, build),
   ]
-  return upload_steps
 
 
 def get_cleanup_step(project, build):
   """Returns the step for cleaning up after doing |build| of |project|."""
-  return {
-      'name': project.image,
-      'args': [
-          'bash',
-          '-c',
-          'rm -r ' + build.out,
-      ],
-  }
+  return {'name': project.image, 'args': ['bash', '-c', f'rm -r {build.out}']}
 
 
 def get_runner_image_name(base_images_project, test_image_suffix):
@@ -443,7 +434,7 @@ def get_runner_image_name(base_images_project, test_image_suffix):
   |base_images_project|. Returns the testing image if |test_image_suffix|."""
   image = f'gcr.io/{base_images_project}/base-runner'
   if test_image_suffix:
-    image += '-' + test_image_suffix
+    image += f'-{test_image_suffix}'
   return image
 
 
@@ -505,14 +496,14 @@ def run_build(oss_fuzz_project,
   else:
     options = DEFAULT_GCB_OPTIONS
 
-  tags = [oss_fuzz_project + '-' + build_type, build_type, oss_fuzz_project]
+  tags = [f'{oss_fuzz_project}-{build_type}', build_type, oss_fuzz_project]
   build_body = {
       'steps': build_steps,
-      'timeout': str(build_lib.BUILD_TIMEOUT) + 's',
+      'timeout': f'{str(build_lib.BUILD_TIMEOUT)}s',
       'options': options,
       'logsBucket': GCB_LOGS_BUCKET,
       'tags': tags,
-      'queueTtl': str(QUEUE_TTL_SECONDS) + 's',
+      'queueTtl': f'{str(QUEUE_TTL_SECONDS)}s',
   }
 
   cloudbuild = cloud_build('cloudbuild',

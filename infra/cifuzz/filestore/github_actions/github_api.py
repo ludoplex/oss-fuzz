@@ -70,7 +70,7 @@ def _get_items(url, headers):
     params = {'per_page': _MAX_ITEMS_PER_PAGE, 'page': str(page_counter)}
     response = _do_get_request(url, params=params, headers=headers)
     response_json = response.json()
-    if not response.status_code == 200:
+    if response.status_code != 200:
       # Check that request was successful.
       logging.error('Request to %s failed. Code: %d. Response: %s',
                     response.request.url, response.status_code, response_json)
@@ -94,11 +94,11 @@ def _get_items(url, headers):
 
 def find_artifact(artifact_name, artifacts):
   """Find the artifact with the name |artifact_name| in |artifacts|."""
-  for artifact in artifacts:
-    # TODO(metzman): Handle multiple by making sure we download the latest.
-    if artifact['name'] == artifact_name and not artifact['expired']:
-      return artifact
-  return None
+  return next(
+      (artifact for artifact in artifacts
+       if artifact['name'] == artifact_name and not artifact['expired']),
+      None,
+  )
 
 
 def list_artifacts(owner, repo, headers):

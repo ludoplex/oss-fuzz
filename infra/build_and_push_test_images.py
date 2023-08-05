@@ -39,7 +39,7 @@ def push_image(tag):
 def build_and_push_image(image, test_image_suffix):
   """Builds and pushes |image| to docker registry with "-testing" suffix."""
   main_tag = TAG_PREFIX + image
-  testing_tag = main_tag + '-' + test_image_suffix
+  testing_tag = f'{main_tag}-{test_image_suffix}'
   tags = [main_tag, testing_tag]
   build_image(image, tags)
   push_image(testing_tag)
@@ -69,7 +69,7 @@ def build_and_push_images(test_image_suffix):
           'base-builder-python', 'base-builder-rust', 'base-builder-swift'
       ],
   ]
-  max_parallelization = max([len(image_list) for image_list in images])
+  max_parallelization = max(len(image_list) for image_list in images)
   proc_count = min(multiprocessing.cpu_count(), max_parallelization)
   logging.info('Using %d parallel processes.', proc_count)
   pool = multiprocessing.Pool(proc_count)

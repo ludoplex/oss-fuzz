@@ -119,10 +119,7 @@ class Builder:  # pylint: disable=too-many-instance-attributes
         self.build_image_and_checkout_src, self.build_fuzzers,
         self.upload_build, self.remove_unaffected_fuzz_targets
     ]
-    for method in methods:
-      if not method():
-        return False
-    return True
+    return all(method() for method in methods)
 
   def remove_unaffected_fuzz_targets(self):
     """Removes the fuzzers unaffected by the patch."""

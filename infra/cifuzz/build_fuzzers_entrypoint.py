@@ -30,25 +30,17 @@ def build_fuzzers_entrypoint():
   """Builds OSS-Fuzz project's fuzzers for CI tools."""
   config = config_utils.BuildFuzzersConfig()
 
-  if config.dry_run:
-    # Sets the default return code on error to success.
-    returncode = 0
-  else:
-    # The default return code when an error occurs.
-    returncode = 1
-
+  returncode = 0 if config.dry_run else 1
   if not build_fuzzers.build_fuzzers(config):
     logging.error('Error building fuzzers for (commit: %s, pr_ref: %s).',
                   config.commit_sha, config.pr_ref)
     return returncode
 
-  if not config.bad_build_check:
+  if (not config.bad_build_check
+      or config.bad_build_check and build_fuzzers.check_fuzzer_build(config)):
     # If we've gotten to this point and we don't need to do bad_build_check,
     # then the build has succeeded.
     returncode = 0
-  elif build_fuzzers.check_fuzzer_build(config):
-    returncode = 0
-
   return returncode
 
 

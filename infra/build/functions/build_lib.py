@@ -73,14 +73,13 @@ ENGINE_INFO = {
 
 def get_targets_list_filename(sanitizer):
   """Returns target list filename."""
-  return TARGETS_LIST_BASENAME + '.' + sanitizer
+  return f'{TARGETS_LIST_BASENAME}.{sanitizer}'
 
 
 def get_targets_list_url(bucket, project, sanitizer):
   """Returns target list url."""
   filename = get_targets_list_filename(sanitizer)
-  url = GCS_UPLOAD_URL_FORMAT.format(bucket, project, filename)
-  return url
+  return GCS_UPLOAD_URL_FORMAT.format(bucket, project, filename)
 
 
 def get_upload_bucket(engine, architecture, testing):
@@ -88,7 +87,7 @@ def get_upload_bucket(engine, architecture, testing):
   testing bucket if |testing|."""
   bucket = ENGINE_INFO[engine].upload_bucket
   if architecture != 'x86_64':
-    bucket += '-' + architecture
+    bucket += f'-{architecture}'
   if testing:
     bucket += '-testing'
   return bucket
@@ -103,7 +102,7 @@ def _get_targets_list(project_name, testing):
 
   url = urlparse.urljoin(GCS_URL_BASENAME, url)
   response = requests.get(url)
-  if not response.status_code == 200:
+  if response.status_code != 200:
     sys.stderr.write('Failed to get list of targets from "%s".\n' % url)
     sys.stderr.write('Status code: %d \t\tText:\n%s\n' %
                      (response.status_code, response.text))
@@ -118,8 +117,7 @@ def get_signed_url(path, method='PUT', content_type=''):
   timestamp = int(time.time() + BUILD_TIMEOUT)
   blob = f'{method}\n\n{content_type}\n{timestamp}\n{path}'
 
-  service_account_path = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
-  if service_account_path:
+  if service_account_path := os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'):
     creds = ServiceAccountCredentials.from_json_keyfile_name(
         os.environ['GOOGLE_APPLICATION_CREDENTIALS'])
     client_id = creds.service_account_email
@@ -130,7 +128,7 @@ def get_signed_url(path, method='PUT', content_type=''):
                                           'v1',
                                           credentials=credentials,
                                           cache_discovery=False)
-    client_id = project + '@appspot.gserviceaccount.com'
+    client_id = f'{project}@appspot.gserviceaccount.com'
     service_account = f'projects/-/serviceAccounts/{client_id}'
     response = iam.projects().serviceAccounts().signBlob(
         name=service_account,
@@ -162,7 +160,7 @@ def download_corpora_steps(project_name, testing):
     download_corpus_args = []
     for binary_name in fuzz_targets[i:i + CORPUS_DOWNLOAD_BATCH_SIZE]:
       qualified_name = binary_name
-      qualified_name_prefix = '%s_' % project_name
+      qualified_name_prefix = f'{project_name}_'
       if not binary_name.startswith(qualified_name_prefix):
         qualified_name = qualified_name_prefix + binary_name
 
@@ -170,8 +168,8 @@ def download_corpora_steps(project_name, testing):
                                                     fuzzer=qualified_name),
                            method='GET')
 
-      corpus_archive_path = os.path.join('/corpus', binary_name + '.zip')
-      download_corpus_args.append('%s %s' % (corpus_archive_path, url))
+      corpus_archive_path = os.path.join('/corpus', f'{binary_name}.zip')
+      download_corpus_args.append(f'{corpus_archive_path} {url}')
 
     steps.append({
         'name': 'gcr.io/oss-fuzz-base/base-runner',
@@ -188,12 +186,12 @@ def download_corpora_steps(project_name, testing):
 
 def http_upload_step(data, signed_url, content_type):
   """Returns a GCB step to upload data to the given URL via GCS HTTP API."""
-  step = {
+  return {
       'name':
-          'gcr.io/cloud-builders/curl',
+      'gcr.io/cloud-builders/curl',
       'args': [
           '-H',
-          'Content-Type: ' + content_type,
+          f'Content-Type: {content_type}',
           '-X',
           'PUT',
           '-d',
@@ -201,20 +199,15 @@ def http_upload_step(data, signed_url, content_type):
           signed_url,
       ],
   }
-  return step
 
 
 def gsutil_rm_rf_step(url):
   """Returns a GCB step to recursively delete the object with given GCS url."""
-  step = {
+  return {
       'name': 'gcr.io/cloud-builders/gsutil',
       'entrypoint': 'sh',
-      'args': [
-          '-c',
-          'gsutil -m rm -rf %s || exit 0' % url,
-      ],
+      'args': ['-c', f'gsutil -m rm -rf {url} || exit 0'],
   }
-  return step
 
 
 def get_pull_test_images_steps(test_image_suffix):
@@ -230,29 +223,22 @@ def get_pull_test_images_steps(test_image_suffix):
   ]
   steps = []
   for image in images:
-    test_image = image + '-' + test_image_suffix
-    steps.append({
-        'name': 'gcr.io/cloud-builders/docker',
-        'args': [
-            'pull',
-            test_image,
-        ],
-        'waitFor': '-'  # Start this immediately, don't wait for previous step.
-    })
-
-    # This step is hacky but gives us great flexibility. OSS-Fuzz has hardcoded
-    # references to gcr.io/oss-fuzz-base/base-builder (in dockerfiles, for
-    # example) and gcr.io/oss-fuzz-base-runner (in this build code). But the
-    # testing versions of those images are called e.g.
-    # gcr.io/oss-fuzz-base/base-builder-testing and
-    # gcr.io/oss-fuzz-base/base-runner-testing. How can we get the build to use
-    # the testing images instead of the real ones? By doing this step: tagging
-    # the test image with the non-test version, so that the test version is used
-    # instead of pulling the real one.
-    steps.append({
-        'name': 'gcr.io/cloud-builders/docker',
-        'args': ['tag', test_image, image],
-    })
+    test_image = f'{image}-{test_image_suffix}'
+    steps.extend((
+        {
+            'name': 'gcr.io/cloud-builders/docker',
+            'args': [
+                'pull',
+                test_image,
+            ],
+            'waitFor':
+            '-',  # Start this immediately, don't wait for previous step.
+        },
+        {
+            'name': 'gcr.io/cloud-builders/docker',
+            'args': ['tag', test_image, image],
+        },
+    ))
   return steps
 
 
@@ -282,26 +268,32 @@ def project_image_steps(name,
     steps.extend(get_pull_test_images_steps(test_image_suffix))
 
   srcmap_step_id = get_srcmap_step_id()
-  steps += [{
-      'name': 'gcr.io/cloud-builders/docker',
-      'args': [
-          'build',
-          '-t',
+  steps += [
+      {
+          'name': 'gcr.io/cloud-builders/docker',
+          'args': [
+              'build',
+              '-t',
+              image,
+              '.',
+          ],
+          'dir': f'oss-fuzz/projects/{name}',
+      },
+      {
+          'name':
           image,
-          '.',
-      ],
-      'dir': 'oss-fuzz/projects/' + name,
-  }, {
-      'name': image,
-      'args': [
-          'bash', '-c',
-          'srcmap > /workspace/srcmap.json && cat /workspace/srcmap.json'
-      ],
-      'env': [
-          'OSSFUZZ_REVISION=$REVISION_ID',
-          'FUZZING_LANGUAGE=%s' % language,
-      ],
-      'id': srcmap_step_id
-  }]
+          'args': [
+              'bash',
+              '-c',
+              'srcmap > /workspace/srcmap.json && cat /workspace/srcmap.json',
+          ],
+          'env': [
+              'OSSFUZZ_REVISION=$REVISION_ID',
+              f'FUZZING_LANGUAGE={language}',
+          ],
+          'id':
+          srcmap_step_id,
+      },
+  ]
 
   return steps

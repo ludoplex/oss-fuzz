@@ -47,11 +47,12 @@ def request_coverage_build(event, context):
 
   with ndb.Client().context():
     credentials, cloud_project = google.auth.default()
-    build_steps = get_build_steps(project_name, cloud_project, BASE_PROJECT)
-    if not build_steps:
+    if build_steps := get_build_steps(project_name, cloud_project,
+                                      BASE_PROJECT):
+      request_build.run_build(project_name,
+                              build_steps,
+                              credentials,
+                              build_and_run_coverage.COVERAGE_BUILD_TYPE,
+                              cloud_project=cloud_project)
+    else:
       return
-    request_build.run_build(project_name,
-                            build_steps,
-                            credentials,
-                            build_and_run_coverage.COVERAGE_BUILD_TYPE,
-                            cloud_project=cloud_project)

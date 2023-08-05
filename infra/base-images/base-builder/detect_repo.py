@@ -52,11 +52,7 @@ def main():
   if not args.repo_name and not args.example_commit:
     raise ValueError(
         'Requires an example commit or a repo name to find repo location.')
-  if args.src_dir:
-    src_dir = args.src_dir
-  else:
-    src_dir = os.environ.get('SRC', '/src')
-
+  src_dir = args.src_dir if args.src_dir else os.environ.get('SRC', '/src')
   for single_dir in get_dirs_to_search(src_dir, args.repo_name):
     full_path = os.path.join(src_dir, single_dir)
     if not os.path.isdir(full_path):
@@ -102,9 +98,7 @@ def get_repo(repo_path):
   output, return_code = execute(['git', 'config', '--get', 'remote.origin.url'],
                                 location=repo_path,
                                 check_result=True)
-  if return_code == 0 and output:
-    return output.rstrip()
-  return None
+  return output.rstrip() if return_code == 0 and output else None
 
 
 def check_for_repo_name(repo_path, expected_repo_name):

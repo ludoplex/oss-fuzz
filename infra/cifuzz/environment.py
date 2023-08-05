@@ -29,10 +29,7 @@ def _eval_value(value_string):
 def get(env_var, default_value=None):
   """Returns an environment variable value."""
   value_string = os.getenv(env_var)
-  if value_string is None:
-    return default_value
-
-  return _eval_value(value_string)
+  return default_value if value_string is None else _eval_value(value_string)
 
 
 def get_bool(env_var, default_value=None):

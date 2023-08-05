@@ -53,12 +53,12 @@ def create_scheduler(cloud_scheduler_client, project_name, schedule, tag,
   location_id = os.environ.get('FUNCTION_REGION')
   parent = cloud_scheduler_client.location_path(project_id, location_id)
   job = {
-      'name': parent + '/jobs/' + project_name + '-scheduler-' + tag,
+      'name': f'{parent}/jobs/{project_name}-scheduler-{tag}',
       'pubsub_target': {
-          'topic_name': 'projects/' + project_id + '/topics/' + topic,
-          'data': project_name.encode()
+          'topic_name': f'projects/{project_id}/topics/{topic}',
+          'data': project_name.encode(),
       },
-      'schedule': schedule
+      'schedule': schedule,
   }
 
   cloud_scheduler_client.create_job(parent, job)
@@ -69,7 +69,7 @@ def delete_scheduler(cloud_scheduler_client, project_name, tag):
   project_id = os.environ.get('GCP_PROJECT')
   location_id = os.environ.get('FUNCTION_REGION')
   name = cloud_scheduler_client.job_path(project_id, location_id,
-                                         project_name + '-scheduler-' + tag)
+                                         f'{project_name}-scheduler-{tag}')
   cloud_scheduler_client.delete_job(name)
 
 
@@ -79,10 +79,10 @@ def update_scheduler(cloud_scheduler_client, project, schedule, tag):
   location_id = os.environ.get('FUNCTION_REGION')
   parent = cloud_scheduler_client.location_path(project_id, location_id)
   job = {
-      'name': parent + '/jobs/' + project.name + '-scheduler-' + tag,
+      'name': f'{parent}/jobs/{project.name}-scheduler-{tag}',
       'pubsub_target': {
-          'topic_name': 'projects/' + project_id + '/topics/request-build',
-          'data': project.name.encode()
+          'topic_name': f'projects/{project_id}/topics/request-build',
+          'data': project.name.encode(),
       },
       'schedule': schedule,
   }
@@ -191,9 +191,7 @@ def get_project_metadata(project_contents):
   # Starting at 6:00 am, next build schedules are added at 'interval' slots
   # Example for interval 2, hours = [6, 18] and schedule = '0 6,18 * * *'
   interval = 24 // builds_per_day
-  hours = []
-  for hour in range(6, 30, interval):
-    hours.append(hour % 24)
+  hours = [hour % 24 for hour in range(6, 30, interval)]
   schedule = '0 ' + ','.join(str(hour) for hour in hours) + ' * * *'
 
   return ProjectMetadata(schedule, project_yaml_contents, dockerfile_contents)

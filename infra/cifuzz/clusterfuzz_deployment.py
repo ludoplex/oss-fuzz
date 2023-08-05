@@ -288,7 +288,7 @@ class OSSFuzz(BaseClusterFuzzDeployment):
     """
     _make_empty_dir_if_nonexistent(corpus_dir)
     project_qualified_fuzz_target_name = target_name
-    qualified_name_prefix = self.config.oss_fuzz_project_name + '_'
+    qualified_name_prefix = f'{self.config.oss_fuzz_project_name}_'
     if not target_name.startswith(qualified_name_prefix):
       project_qualified_fuzz_target_name = qualified_name_prefix + target_name
 

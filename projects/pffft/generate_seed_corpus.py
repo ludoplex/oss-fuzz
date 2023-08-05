@@ -25,7 +25,7 @@ def IsValidSize(n):
 
 def main():
   if len(sys.argv) < 2:
-    print('Usage: %s <path to output directory>' % sys.argv[0])
+    print(f'Usage: {sys.argv[0]} <path to output directory>')
     sys.exit(1)
 
   output_path = sys.argv[1]
@@ -51,7 +51,7 @@ def main():
     rnd_s16 = 32768.0 * 2.0 * (np.random.rand(n) - 1.0)
     rnd_s16 = rnd_s16.astype(np.float32)
     rnd_s16.tofile(os.path.join(output_path, 'rnd_s16_%d' % n))
-  
+
   sys.exit(0)
 
 

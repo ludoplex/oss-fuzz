@@ -167,11 +167,7 @@ def upload_artifact_to_file_container(upload_url, files_to_upload, options):
                 config_variables.UPLOAD_CHUNK_SIZE)
   # By default, file uploads will continue if there is an error unless specified
   # differently in the options.
-  if options:
-    continue_on_error = options.get('continue_on_error', True)
-  else:
-    continue_on_error = True
-
+  continue_on_error = options.get('continue_on_error', True) if options else True
   # Prepare the necessary parameters to upload all the files.
   upload_file_size = 0
   total_file_size = 0
@@ -209,7 +205,7 @@ def _add_url_params(url, params):
 
   # Update URL.
   query = dict(urllib.parse.parse_qsl(url_parts['query']))
-  query.update(params)
+  query |= params
   url_parts['query'] = urllib.parse.urlencode(query)
 
   # Return a URL string.

@@ -47,7 +47,7 @@ def search_bisect_output(output):
   # TODO(metzman): Is it necessary to look for "good"?
   culprit_regex = re.compile('([a-z0-9]{40}) is the first (good|bad) commit')
   match = re.match(culprit_regex, output)
-  return match.group(1) if match is not None else None
+  return match[1] if match is not None else None
 
 
 class GitRepo:
@@ -144,7 +144,7 @@ def clone_with_retries(repo, local_path, num_retries=10):
                             expect_zero=False)
     if retcode == 0:
       return
-  raise Exception('Could not checkout %s.' % repo)
+  raise Exception(f'Could not checkout {repo}.')
 
 
 def get_clang_target_arch():
@@ -154,7 +154,7 @@ def get_clang_target_arch():
     return 'X86'
   if 'aarch64' in arch:
     return 'AArch64'
-  raise Exception('Unsupported target: %s.' % arch)
+  raise Exception(f'Unsupported target: {arch}.')
 
 
 def prepare_build(llvm_project_path):
@@ -162,16 +162,22 @@ def prepare_build(llvm_project_path):
   llvm_build_dir = os.path.join(os.getenv('WORK'), 'llvm-build')
   if not os.path.exists(llvm_build_dir):
     os.mkdir(llvm_build_dir)
-  execute([
-      'cmake', '-G', 'Ninja', '-DLIBCXX_ENABLE_SHARED=OFF',
-      '-DLIBCXX_ENABLE_STATIC_ABI_LIBRARY=ON', '-DLIBCXXABI_ENABLE_SHARED=OFF',
-      '-DCMAKE_BUILD_TYPE=Release',
-      '-DLLVM_ENABLE_PROJECTS=libcxx;libcxxabi;compiler-rt;clang',
-      '-DLLVM_TARGETS_TO_BUILD=' + get_clang_target_arch(),
-      os.path.join(llvm_project_path, 'llvm')
-  ],
-          env=get_clang_build_env(),
-          cwd=llvm_build_dir)
+  execute(
+      [
+          'cmake',
+          '-G',
+          'Ninja',
+          '-DLIBCXX_ENABLE_SHARED=OFF',
+          '-DLIBCXX_ENABLE_STATIC_ABI_LIBRARY=ON',
+          '-DLIBCXXABI_ENABLE_SHARED=OFF',
+          '-DCMAKE_BUILD_TYPE=Release',
+          '-DLLVM_ENABLE_PROJECTS=libcxx;libcxxabi;compiler-rt;clang',
+          f'-DLLVM_TARGETS_TO_BUILD={get_clang_target_arch()}',
+          os.path.join(llvm_project_path, 'llvm'),
+      ],
+      env=get_clang_build_env(),
+      cwd=llvm_build_dir,
+  )
   return llvm_build_dir
 
 

@@ -109,9 +109,9 @@ class DetectRepoIntegrationTest(unittest.TestCase):
                                  location=os.path.dirname(
                                      os.path.realpath(__file__)))
     match = re.search(r'\bDetected repo: ([^ ]+) ([^ ]+)', out.rstrip())
-    if match and match.group(1) and match.group(2):
-      self.assertEqual(match.group(1), repo_origin)
-      self.assertEqual(match.group(2), os.path.join(tmp_dir, repo_name))
+    if match and match[1] and match[2]:
+      self.assertEqual(match[1], repo_origin)
+      self.assertEqual(match[2], os.path.join(tmp_dir, repo_name))
     else:
       self.assertIsNone(repo_origin)
       self.assertIsNone(repo_name)

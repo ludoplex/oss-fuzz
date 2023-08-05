@@ -155,9 +155,10 @@ class FilesystemCoverageGetFilesCoveredByTargetTest(
     self.filesystem_coverage = get_coverage.FilesystemCoverage(
         REPO_PATH, self.coverage_path)
     self.setUpPyfakefs()
-    self.fs.create_file(os.path.join(self.coverage_path, 'fuzzer_stats',
-                                     FUZZ_TARGET + '.json'),
-                        contents=json.dumps(_fuzzer_cov_data))
+    self.fs.create_file(
+        os.path.join(self.coverage_path, 'fuzzer_stats', f'{FUZZ_TARGET}.json'),
+        contents=json.dumps(_fuzzer_cov_data),
+    )
 
   def test_valid_target(self):
     """Tests that covered files can be retrieved from a coverage report."""

@@ -51,11 +51,11 @@ class Repository:
     if self.path == path:
       return self.contents
 
-    for content_file in self.contents:
-      if content_file.path == path:
-        return content_file.contents
-
-    return None
+    return next(
+        (content_file.contents
+         for content_file in self.contents if content_file.path == path),
+        None,
+    )
 
   def set_yaml_contents(self, decoded_content):
     """Set yaml_contents."""

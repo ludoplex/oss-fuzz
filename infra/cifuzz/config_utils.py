@@ -42,9 +42,7 @@ DEFAULT_ARCHITECTURE = 'x86_64'
 
 
 def _get_pr_ref(event):
-  if event == 'pull_request':
-    return os.getenv('GITHUB_REF')
-  return None
+  return os.getenv('GITHUB_REF') if event == 'pull_request' else None
 
 
 def _get_sanitizer():

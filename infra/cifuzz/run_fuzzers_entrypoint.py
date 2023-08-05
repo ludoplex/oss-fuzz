@@ -37,12 +37,12 @@ def delete_unneeded_docker_images(config):
   images = [
       project_image,
       docker.BASE_BUILDER_TAG,
-      docker.BASE_BUILDER_TAG + ':xenial',
-      docker.BASE_BUILDER_TAG + '-go',
-      docker.BASE_BUILDER_TAG + '-jvm',
-      docker.BASE_BUILDER_TAG + '-python',
-      docker.BASE_BUILDER_TAG + '-rust',
-      docker.BASE_BUILDER_TAG + '-swift',
+      f'{docker.BASE_BUILDER_TAG}:xenial',
+      f'{docker.BASE_BUILDER_TAG}-go',
+      f'{docker.BASE_BUILDER_TAG}-jvm',
+      f'{docker.BASE_BUILDER_TAG}-python',
+      f'{docker.BASE_BUILDER_TAG}-rust',
+      f'{docker.BASE_BUILDER_TAG}-swift',
   ]
   docker.delete_images(images)
 
@@ -52,12 +52,7 @@ def run_fuzzers_entrypoint():
   This action can be added to any OSS-Fuzz project's workflow that uses
   Github."""
   config = config_utils.RunFuzzersConfig()
-  # The default return code when an error occurs.
-  returncode = 1
-  if config.dry_run:
-    # Sets the default return code on error to success.
-    returncode = 0
-
+  returncode = 0 if config.dry_run else 1
   delete_unneeded_docker_images(config)
   # Run the specified project's fuzzers from the build.
   result = run_fuzzers.run_fuzzers(config)

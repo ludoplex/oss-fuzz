@@ -99,8 +99,6 @@ def wrap(retries,
           if not handle_retry(num_try, exception=error):
             raise
 
-    if is_generator:
-      return _generator_wrapper
-    return _wrapper
+    return _generator_wrapper if is_generator else _wrapper
 
   return decorator

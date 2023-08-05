@@ -46,18 +46,16 @@ def _get_base_image_steps(images, tag_prefix=TAG_PREFIX):
       'name': 'gcr.io/cloud-builders/git',
   }]
 
-  for base_image in images:
-    steps.append({
-        'args': [
-            'build',
-            '-t',
-            tag_prefix + base_image,
-            '.',
-        ],
-        'dir': 'oss-fuzz/infra/base-images/' + base_image,
-        'name': 'gcr.io/cloud-builders/docker',
-    })
-
+  steps.extend({
+      'args': [
+          'build',
+          '-t',
+          tag_prefix + base_image,
+          '.',
+      ],
+      'dir': f'oss-fuzz/infra/base-images/{base_image}',
+      'name': 'gcr.io/cloud-builders/docker',
+  } for base_image in images)
   return steps
 
 
@@ -73,11 +71,11 @@ def run_build(steps, images):
   credentials, _ = google.auth.default()
   build_body = {
       'steps': steps,
-      'timeout': str(6 * 3600) + 's',
+      'timeout': f'{str(6 * 3600)}s',
       'options': {
           'machineType': 'N1_HIGHCPU_32'
       },
-      'images': images
+      'images': images,
   }
   cloudbuild = build('cloudbuild',
                      'v1',
